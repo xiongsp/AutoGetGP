@@ -96,23 +96,23 @@ def deal(username, password):
     # 执行
     record = []
     b.get("https://uis.nwpu.edu.cn/cas/login?service=https://ecampus.nwpu.edu.cn/")
-    user_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'username')))
+    user_box = WebDriverWait(b, 30).until(EC.presence_of_element_located((By.ID, 'username')))
     user_box.send_keys(username)
-    pass_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'password')))
+    pass_box = WebDriverWait(b, 30).until(EC.presence_of_element_located((By.ID, 'password')))
     pass_box.send_keys(password)  # 输入账号密码
-    submit_button = WebDriverWait(b, 10).until(
+    submit_button = WebDriverWait(b, 30).until(
         EC.presence_of_element_located((By.XPATH, '/html/body/main/div/div/div[2]/div[3]/div/div[2]/div[3]/div/'
                                                   'div/div[1]/div[1]/form/div[4]/div/input[5]')))
     submit_button.click()
     output("步骤1-登录-成功！")
-    jw_button = WebDriverWait(b, 10).until(EC.presence_of_element_located(
+    jw_button = WebDriverWait(b, 30).until(EC.presence_of_element_located(
         (By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/section/div/div[1]/div[2]/div/div[2]/ul[1]/li[3]/span[1]')))
     jw_button.click()
     time.sleep(4)
     b.get('https://jwxt.nwpu.edu.cn/student/for-std/grade/sheet/semester-index/273409')
     WebDriverWait(b, 300).until(
         EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody/tr[1]')))
-    table = WebDriverWait(b, 10).until(
+    table = WebDriverWait(b, 30).until(
         EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody')))
     items = table.find_elements(By.XPATH, './tr')
     heads = table.find_elements(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/thead/tr/td')
