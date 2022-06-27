@@ -7,6 +7,8 @@ from smtplib import SMTP_SSL
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 options = webdriver.ChromeOptions()
 # 判断操作系统
@@ -17,8 +19,8 @@ else:
     b = webdriver.Chrome(options=options)
 error_times = 0
 
-if os.path.exists('ENV.txt'):
-    with open("ENV.txt", 'r') as file_to_write:
+if os.path.exists('../ENV.txt'):
+    with open("../ENV.txt", 'r') as file_to_write:
         env_str = file_to_write.read()
         for each_item in env_str.split(';'):
             os.environ[each_item.split('=')[0]] = each_item.split('=')[1]
@@ -43,31 +45,24 @@ def retry(retry_times, interval):
 
 @retry(retry_times=3, interval=1)
 def get_info():
-    try:
-        IP = os.getenv("IP")
-        PORT = os.getenv("PORT")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((IP, int(PORT)))
-        s.send(b"GET!")
-        info = s.recv(1024).decode("utf-8")
-    except:
-        time.sleep(1)
-        return get_info()
+    IP = os.getenv("IP")
+    PORT = os.getenv("PORT")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((IP, int(PORT)))
+    s.send(b"GET!")
+    info = s.recv(1024).decode("utf-8")
     print(info)
     return info
 
+
 @retry(retry_times=3, interval=1)
 def set_info(message):
-    try:
-        IP = os.getenv("IP")
-        PORT = os.getenv("PORT")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((IP, int(PORT)))
-        s.send(message.encode("utf-8"))
-        info = s.recv(1024).decode("utf-8")
-    except:
-        time.sleep(1)
-        return set_info(message)
+    IP = os.getenv("IP")
+    PORT = os.getenv("PORT")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((IP, int(PORT)))
+    s.send(message.encode("utf-8"))
+    info = s.recv(1024).decode("utf-8")
     if info == "OK":
         return True
 
@@ -112,52 +107,54 @@ def finish(code):
     exit(code)
 
 
+@retry(retry_times=3, interval=1)
 def deal(username, password, retry=False):
-    try:
-        # 执行
-        record = []
-        if not retry:
-            b.get("https://uis.nwpu.edu.cn/cas/login?service=https://ecampus.nwpu.edu.cn/")
-            b.find_element(By.ID, 'username').send_keys(username)
-            b.find_element(By.ID, 'password').send_keys(password)  # 输入账号密码
-            b.find_element(By.NAME, 'submit').click()
-            output("步骤1-登录-成功！")
-        time.sleep(4)
-        b.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/section/div/div[1]/div[2]/div/div[2]/ul[1]/li['
-                                 '3]/span[1]').click()
-        time.sleep(4)
-        b.get('https://jwxt.nwpu.edu.cn/student/for-std/grade/sheet/semester-index/273409')
-        time.sleep(10)
-        table = b.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody')
-        items = table.find_elements(By.XPATH, './tr')
-        heads = table.find_elements(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/thead/tr/td')
-        for head in heads:
-            print(head.text, end='\t')
-        print()
-        for item in items:
-            class_name = item.find_element(By.XPATH, './td[1]/div[1]').text
-            credit_num = item.find_element(By.XPATH, './td[2]').text
-            gp_num = item.find_element(By.XPATH, './td[3]').text
-            grade_num = item.find_element(By.XPATH, './td[4]').text
-            print(class_name, end='\t')
-            print(credit_num, end='\t')
-            print(gp_num, end='\t')
-            print(grade_num)
-            record.append(str([class_name, credit_num, gp_num, grade_num]))
-        get_data = get_info()
-        if get_data is None:
-            raise 'Get Error After Actively Retry'
-        if get_data == 'None' or get_data != str(record):
-            if set_info(str(record)):
-                output("步骤2-发送成绩-成功！")
-            if get_data != str(record) and get_data != 'None':
-                send_mail('新成绩出了！', str(set(record).difference(set(eval(get_data)))))
-        finish(0)
-
-    except Exception as e:
-        output(str(e))
-        finish(1)
-        send_mail('出错了！', str(e))
+    # 执行
+    record = []
+    if not retry:
+        b.get("https://uis.nwpu.edu.cn/cas/login?service=https://ecampus.nwpu.edu.cn/")
+        user_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'username')))
+        user_box.send_keys(username)
+        pass_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'password')))
+        pass_box.send_keys(password)  # 输入账号密码
+        submit_button = WebDriverWait(b, 10).until(
+            EC.presence_of_element_located((By.XPATH, '/html/body/main/div/div/div[2]/div[3]/div/div[2]/div[3]/div/'
+                                                      'div/div[1]/div[1]/form/div[4]/div/input[5]')))
+        submit_button.click()
+        output("步骤1-登录-成功！")
+    jw_button = WebDriverWait(b, 10).until(EC.presence_of_element_located(
+        (By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/section/div/div[1]/div[2]/div/div[2]/ul[1]/li[3]/span[1]')))
+    jw_button.click()
+    time.sleep(4)
+    b.get('https://jwxt.nwpu.edu.cn/student/for-std/grade/sheet/semester-index/273409')
+    WebDriverWait(b, 30).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody/tr[1]')))
+    table = WebDriverWait(b, 10).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody')))
+    items = table.find_elements(By.XPATH, './tr')
+    heads = table.find_elements(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/thead/tr/td')
+    for head in heads:
+        print(head.text, end='\t')
+    print()
+    for item in items:
+        class_name = item.find_element(By.XPATH, './td[1]/div[1]').text
+        credit_num = item.find_element(By.XPATH, './td[2]').text
+        gp_num = item.find_element(By.XPATH, './td[3]').text
+        grade_num = item.find_element(By.XPATH, './td[4]').text
+        print(class_name, end='\t')
+        print(credit_num, end='\t')
+        print(gp_num, end='\t')
+        print(grade_num)
+        record.append(str([class_name, credit_num, gp_num, grade_num]))
+    get_data = get_info()
+    if get_data is None:
+        raise 'Get Error After Actively Retry'
+    if get_data == 'None' or get_data != str(record):
+        if set_info(str(record)):
+            output("步骤2-发送成绩-成功！")
+        if get_data != str(record) and get_data != 'None':
+            send_mail('新成绩出了！', str(set(record).difference(set(eval(get_data)))))
+    finish(0)
 
 
 school_id = os.getenv('SCHOOL_ID')
