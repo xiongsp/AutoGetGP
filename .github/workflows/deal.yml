@@ -2,7 +2,7 @@ name: AutoGetGP
 on:
   push:
   schedule:
-    - cron: '3 0/1 * * *' #北京时间8:03，预计9点左右执行，每一小时执行一次
+    - cron: '3/30 0/1 * * *' #北京时间8:03，预计9点左右执行，每半小时执行一次
 
 jobs:
   NWPU-GET:
