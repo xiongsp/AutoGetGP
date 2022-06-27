@@ -122,12 +122,12 @@ def deal(username, password, retry=False):
             b.find_element(By.ID, 'password').send_keys(password)  # 输入账号密码
             b.find_element(By.NAME, 'submit').click()
             output("步骤1-登录-成功！")
-        time.sleep(1)
+        time.sleep(4)
         b.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/section/div/div[1]/div[2]/div/div[2]/ul[1]/li['
                                  '3]/span[1]').click()
-        time.sleep(1)
+        time.sleep(4)
         b.get('https://jwxt.nwpu.edu.cn/student/for-std/grade/sheet/semester-index/273409')
-        time.sleep(3)
+        time.sleep(10)
         table = b.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody')
         items = table.find_elements(By.XPATH, './tr')
         heads = table.find_elements(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/thead/tr/td')
