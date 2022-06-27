@@ -127,7 +127,7 @@ def deal(username, password, retry=False):
     jw_button.click()
     time.sleep(4)
     b.get('https://jwxt.nwpu.edu.cn/student/for-std/grade/sheet/semester-index/273409')
-    WebDriverWait(b, 30).until(
+    WebDriverWait(b, 300).until(
         EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody/tr[1]')))
     table = WebDriverWait(b, 10).until(
         EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody')))
