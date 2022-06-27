@@ -1,3 +1,4 @@
 record.txt
 ENV.txt
 .idea
+*.log

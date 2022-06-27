@@ -1,16 +1,75 @@
 import os
+import socket
+import sys
+import time
+from email.mime.text import MIMEText
+from smtplib import SMTP_SSL
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import time
-import sys
-from smtplib import SMTP_SSL
-from email.mime.text import MIMEText
+
+options = webdriver.ChromeOptions()
+# 判断操作系统
+if sys.platform == 'win32':
+    b = webdriver.Edge()  # 调试用
+else:
+    options.add_argument("--headless")
+    b = webdriver.Chrome(options=options)
+error_times = 0
 
 if os.path.exists('ENV.txt'):
     with open("ENV.txt", 'r') as file_to_write:
         env_str = file_to_write.read()
         for each_item in env_str.split(';'):
             os.environ[each_item.split('=')[0]] = each_item.split('=')[1]
+
+
+def retry(retry_times, interval):
+    def decorator(f):
+        def wrap(*args, **kwargs):
+            i = 0
+            while retry_times and i < retry_times:
+                try:
+                    return f(*args, **kwargs)
+                except ConnectionError:
+                    i += 1
+                    time.sleep(interval)
+                    continue
+
+        return wrap
+
+    return decorator
+
+
+@retry(retry_times=3, interval=1)
+def get_info():
+    try:
+        IP = os.getenv("IP")
+        PORT = os.getenv("PORT")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((IP, int(PORT)))
+        s.send(b"GET!")
+        info = s.recv(1024).decode("utf-8")
+    except:
+        time.sleep(1)
+        return get_info()
+    print(info)
+    return info
+
+@retry(retry_times=3, interval=1)
+def set_info(message):
+    try:
+        IP = os.getenv("IP")
+        PORT = os.getenv("PORT")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((IP, int(PORT)))
+        s.send(message.encode("utf-8"))
+        info = s.recv(1024).decode("utf-8")
+    except:
+        time.sleep(1)
+        return set_info(message)
+    if info == "OK":
+        return True
 
 
 def send_mail(subject, message):
@@ -26,21 +85,13 @@ def send_mail(subject, message):
     msg = MIMEText(message, 'plain', _charset="utf-8")
     # 邮件主题描述
     msg["Subject"] = subject
+    # 发件人
+    msg["from"] = '成绩信息'
     with SMTP_SSL(host="smtp.qq.com", port=465) as smtp:
         # 登录发邮件服务器
         smtp.login(user=user, password=password)
         # 实际发送、接收邮件配置
         smtp.sendmail(from_addr=user, to_addrs=to, msg=msg.as_string())
-
-
-options = webdriver.ChromeOptions()
-# 判断操作系统
-if sys.platform == 'win32':
-    b = webdriver.Edge()  # 调试用
-else:
-    options.add_argument("--headless")
-    b = webdriver.Chrome(options=options)
-error_times = 0
 
 
 def output(string):
@@ -93,19 +144,14 @@ def deal(username, password, retry=False):
             print(gp_num, end='\t')
             print(grade_num)
             record.append(str([class_name, credit_num, gp_num, grade_num]))
-        if not os.path.exists('record.txt'):
-            with open('record.txt', 'w') as f:
-                f.write(str(record))
-            send_mail('新成绩出了！', str(record))
-        else:
-            with open('record.txt', 'r') as f:
-                old_record = f.read()
-            if old_record != str(record):
-                os.remove('record.txt')
-                with open('record.txt', 'w') as f:
-                    f.write(str(record))
-                    send_mail('新成绩出了！', str(set(record).difference(set(eval(old_record)))))
-
+        get_data = get_info()
+        if get_data is None:
+            raise 'Get Error After Actively Retry'
+        if get_data == 'None' or get_data != str(record):
+            if set_info(str(record)):
+                output("步骤2-发送成绩-成功！")
+            if get_data != str(record) and get_data != 'None':
+                send_mail('新成绩出了！', str(set(record).difference(set(eval(get_data)))))
         finish(0)
 
     except Exception as e:
