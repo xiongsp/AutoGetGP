@@ -92,9 +92,7 @@ def finish(code):
 
 
 @retry(tries=10, delay=2)
-def deal(username, password):
-    # 执行
-    record = []
+def login(username, password):
     b.get("https://uis.nwpu.edu.cn/cas/login?service=https://ecampus.nwpu.edu.cn/")
     user_box = WebDriverWait(b, 30).until(EC.presence_of_element_located((By.ID, 'username')))
     user_box.send_keys(username)
@@ -105,9 +103,17 @@ def deal(username, password):
                                                   'div/div[1]/div[1]/form/div[4]/div/input[5]')))
     submit_button.click()
     output("步骤1-登录-成功！")
+
+
+@retry(tries=10, delay=2)
+def deal():
+    # 执行
+    record = []
+    b.get('https://ecampus.nwpu.edu.cn/main.html#/Index')
     jw_button = WebDriverWait(b, 30).until(EC.presence_of_element_located(
         (By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/section/div/div[1]/div[2]/div/div[2]/ul[1]/li[3]/span[1]')))
     jw_button.click()
+    output("步骤2-前往教务系统-成功")
     time.sleep(4)
     b.get('https://jwxt.nwpu.edu.cn/student/for-std/grade/sheet/semester-index/273409')
     WebDriverWait(b, 300).until(
@@ -116,6 +122,7 @@ def deal(username, password):
         EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/tbody')))
     items = table.find_elements(By.XPATH, './tr')
     heads = table.find_elements(By.XPATH, '/html/body/div[1]/div[2]/div[1]/table/thead/tr/td')
+    output("步骤3-表格获取-成功")
     for head in heads:
         print(head.text, end='\t')
     print()
@@ -134,7 +141,7 @@ def deal(username, password):
         raise 'Get Error After Actively Retry'
     if get_data == 'None' or get_data != str(record):
         if set_info(str(record)):
-            output("步骤2-发送成绩-成功！")
+            output("步骤4-发送成绩-成功！")
         if get_data != str(record) and get_data != 'None':
             send_mail('新成绩出了！', str(set(record).difference(set(eval(get_data)))))
     finish(0)
@@ -143,4 +150,5 @@ def deal(username, password):
 school_id = os.getenv('SCHOOL_ID')
 school_password = os.getenv('SCHOOL_PSD')
 
-deal(school_id, school_password)
+login(school_id, school_password)
+deal()
