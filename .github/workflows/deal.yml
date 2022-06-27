@@ -20,12 +20,12 @@ jobs:
           pip install -r requirements.txt
       - name: 'Start'
         env:
-          USER_NAME: {{secrets.USER_NAME}}
-          PASSWORD: {{secrets.PASSWORD}}
-          TO: {{secrets.TO}}
-          MAIL_PROVIDER: {{secrets.MAIL_PROVIDER}}
-          SCHOOL_ID: {{secrets.SCHOOL_ID}}
-          SCHOOL_PSD: {{secrets.SCHOOL_PSD}}
-          IP: {{secrets.IP}}
-          PORT: {{secrets.PORT}}
+          USER_NAME: ${{secrets.USER_NAME}}
+          PASSWORD: ${{secrets.PASSWORD}}
+          TO: ${{secrets.TO}}
+          MAIL_PROVIDER: ${{secrets.MAIL_PROVIDER}}
+          SCHOOL_ID: ${{secrets.SCHOOL_ID}}
+          SCHOOL_PSD: ${{secrets.SCHOOL_PSD}}
+          IP: ${{secrets.IP}}
+          PORT: ${{secrets.PORT}}
         run: python ./client/client.py
