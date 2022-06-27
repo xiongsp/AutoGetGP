@@ -1,4 +1,4 @@
 record.txt
-ENV.txt
+client/ENV.txt
 .idea
 *.log

@@ -5,6 +5,7 @@ import time
 from email.mime.text import MIMEText
 from smtplib import SMTP_SSL
 
+from retry import retry
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -19,31 +20,14 @@ else:
     b = webdriver.Chrome(options=options)
 error_times = 0
 
-if os.path.exists('../ENV.txt'):
-    with open("../ENV.txt", 'r') as file_to_write:
+if os.path.exists('ENV.txt'):
+    with open("ENV.txt", 'r') as file_to_write:
         env_str = file_to_write.read()
         for each_item in env_str.split(';'):
             os.environ[each_item.split('=')[0]] = each_item.split('=')[1]
 
 
-def retry(retry_times, interval):
-    def decorator(f):
-        def wrap(*args, **kwargs):
-            i = 0
-            while retry_times and i < retry_times:
-                try:
-                    return f(*args, **kwargs)
-                except ConnectionError:
-                    i += 1
-                    time.sleep(interval)
-                    continue
-
-        return wrap
-
-    return decorator
-
-
-@retry(retry_times=3, interval=1)
+@retry(tries=3, delay=1)
 def get_info():
     IP = os.getenv("IP")
     PORT = os.getenv("PORT")
@@ -55,7 +39,7 @@ def get_info():
     return info
 
 
-@retry(retry_times=3, interval=1)
+@retry(tries=3, delay=1)
 def set_info(message):
     IP = os.getenv("IP")
     PORT = os.getenv("PORT")
@@ -107,21 +91,20 @@ def finish(code):
     exit(code)
 
 
-@retry(retry_times=3, interval=1)
-def deal(username, password, retry=False):
+@retry(tries=10, delay=2)
+def deal(username, password):
     # 执行
     record = []
-    if not retry:
-        b.get("https://uis.nwpu.edu.cn/cas/login?service=https://ecampus.nwpu.edu.cn/")
-        user_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'username')))
-        user_box.send_keys(username)
-        pass_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'password')))
-        pass_box.send_keys(password)  # 输入账号密码
-        submit_button = WebDriverWait(b, 10).until(
-            EC.presence_of_element_located((By.XPATH, '/html/body/main/div/div/div[2]/div[3]/div/div[2]/div[3]/div/'
-                                                      'div/div[1]/div[1]/form/div[4]/div/input[5]')))
-        submit_button.click()
-        output("步骤1-登录-成功！")
+    b.get("https://uis.nwpu.edu.cn/cas/login?service=https://ecampus.nwpu.edu.cn/")
+    user_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'username')))
+    user_box.send_keys(username)
+    pass_box = WebDriverWait(b, 10).until(EC.presence_of_element_located((By.ID, 'password')))
+    pass_box.send_keys(password)  # 输入账号密码
+    submit_button = WebDriverWait(b, 10).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/main/div/div/div[2]/div[3]/div/div[2]/div[3]/div/'
+                                                  'div/div[1]/div[1]/form/div[4]/div/input[5]')))
+    submit_button.click()
+    output("步骤1-登录-成功！")
     jw_button = WebDriverWait(b, 10).until(EC.presence_of_element_located(
         (By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/section/div/div[1]/div[2]/div/div[2]/ul[1]/li[3]/span[1]')))
     jw_button.click()
