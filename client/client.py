@@ -27,7 +27,7 @@ if os.path.exists('ENV.txt'):
             os.environ[each_item.split('=')[0]] = each_item.split('=')[1]
 
 
-@retry(tries=3, delay=1)
+@retry(tries=10, delay=3)
 def get_info():
     IP = os.getenv("IP")
     PORT = os.getenv("PORT")
@@ -39,7 +39,7 @@ def get_info():
     return info
 
 
-@retry(tries=3, delay=1)
+@retry(tries=10, delay=3)
 def set_info(message):
     IP = os.getenv("IP")
     PORT = os.getenv("PORT")
