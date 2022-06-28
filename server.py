@@ -2,7 +2,7 @@ import base64
 import os
 from email.mime.text import MIMEText
 from smtplib import SMTP_SSL
-
+import time
 import requests
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
@@ -78,6 +78,14 @@ def encrypt(content):
     return cipherText.decode('utf-8')
 
 
+def log(message):
+    print(message)
+    os.mkdir('./log')
+    # 日期格式 YYYY-MM-DD
+    with open(f'./log/{time.strftime("%Y-%m-%d")}.log', 'a') as file_to_write:
+        file_to_write.write(message + '\n')
+
+
 session_login = login(config_account, config_password)
 response = session_login.get(config_url).json()
 history = []
@@ -86,14 +94,14 @@ for item in response['semesterId2studentGrades']['178']:
     course_credits = item['course']['credits']
     course_gp = item['gp']
     course_score = item['gaGrade']
-    print(f'{course_name}\t{course_credits}\t{course_gp}\t{course_score}')
     history.append(f'{course_name}\t{course_credits}\t{course_gp}\t{course_score}')
+    log(f'{course_name}\t{course_credits}\t{course_gp}\t{course_score}')
 
 if os.path.exists('record.txt'):
     with open('record.txt', 'r') as f:
         old_history = f.read()
     if old_history != str(history):
-        # send_mail('出新成绩了', str(set(history) - set(eval(old_history))))
+        send_mail('出新成绩了', str(set(history) - set(eval(old_history))))
         with open('record.txt', 'w') as f:
             f.write(str(history))
 else:
