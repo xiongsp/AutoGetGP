@@ -1,14 +1,23 @@
 import base64
 import os
+import time
 from email.mime.text import MIMEText
 from smtplib import SMTP_SSL
-import time
+
 import requests
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 from lxml import etree
 
 from config import *
+
+
+def log(message):
+    print(f'{time.strftime("%Y-%m-%d %H:%M:%S")} {message}')
+    if not os.path.exists('./log'):
+        os.mkdir('./log')
+    with open(f'./log/{time.strftime("%Y-%m-%d")}.log', 'a') as file_to_write:
+        file_to_write.write(f'{time.strftime("%Y-%m-%d %H:%M:%S")} {message}\n')
 
 
 def send_mail(subject, message):
@@ -58,14 +67,16 @@ def login(account, password):
                              headers=header)
 
     if login_result.status_code == 500:
-        print("login error:response HTTP 500")
+        log("login error:response HTTP 500")
         exit(0)
 
     cookie = user.cookies
     if "TGC" in dict(cookie).keys() and (login_result.text.find('欢迎使用') != -1):
+
         user.get("https://jwxt.nwpu.edu.cn/student/sso-login")
         return user
     else:
+        log("login error, user account" + account)
         raise ("login error, user account " + account)
 
 
@@ -76,15 +87,6 @@ def encrypt(content):
     cipherRSA = PKCS1_v1_5.new(pubKey)
     cipherText = base64.b64encode(cipherRSA.encrypt(content))
     return cipherText.decode('utf-8')
-
-
-def log(message):
-    print(message)
-    if not os.path.exists('./log'):
-        os.mkdir('./log')
-    # 日期格式 YYYY-MM-DD
-    with open(f'./log/{time.strftime("%Y-%m-%d")}.log', 'a') as file_to_write:
-        file_to_write.write(message + '\n')
 
 
 session_login = login(config_account, config_password)
@@ -102,9 +104,11 @@ if os.path.exists('record.txt'):
     with open('record.txt', 'r') as f:
         old_history = f.read()
     if old_history != str(history):
+        log(f'新成绩{str(set(history) - set(old_history))}')
         send_mail('出新成绩了', str(set(history) - set(eval(old_history))))
         with open('record.txt', 'w') as f:
             f.write(str(history))
 else:
+    log('初始化')
     with open('record.txt', 'w') as f:
         f.write(str(history))
