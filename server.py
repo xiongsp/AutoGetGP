@@ -26,7 +26,7 @@ def send_mail(subject, message):
     msg["Subject"] = subject
     # 发件人
     msg["from"] = '成绩信息'
-    with SMTP_SSL(host="smtp.qq.com", port=465) as smtp:
+    with SMTP_SSL(host=config_mail_host, port=config_mail_host_port) as smtp:
         # 登录发邮件服务器
         smtp.login(user=user, password=password)
         # 实际发送、接收邮件配置
