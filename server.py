@@ -80,7 +80,8 @@ def encrypt(content):
 
 def log(message):
     print(message)
-    os.mkdir('./log')
+    if not os.path.exists('./log'):
+        os.mkdir('./log')
     # 日期格式 YYYY-MM-DD
     with open(f'./log/{time.strftime("%Y-%m-%d")}.log', 'a') as file_to_write:
         file_to_write.write(message + '\n')
