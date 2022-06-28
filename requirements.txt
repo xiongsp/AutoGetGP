@@ -1,2 +1,2 @@
-selenium
-retry
+requests
+lxml
