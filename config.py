@@ -4,3 +4,6 @@ userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 config_account = ''
 config_password = ''
 config_url = ''
+config_mail_username = ''
+config_mail_password = ''
+config_mail_to = ''
