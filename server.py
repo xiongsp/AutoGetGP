@@ -74,6 +74,8 @@ def login(account, password):
     if "TGC" in dict(cookie).keys() and (login_result.text.find('欢迎使用') != -1):
 
         user.get("https://jwxt.nwpu.edu.cn/student/sso-login")
+        with open("cookie.txt", 'w') as f:
+            f.write(str(requests.utils.dict_from_cookiejar(user.cookies)))
         return user
     else:
         log("login error, user account" + account)
@@ -89,7 +91,26 @@ def encrypt(content):
     return cipherText.decode('utf-8')
 
 
-session_login = login(config_account, config_password)
+def get_with_cookie():
+    if os.path.exists("cookie.txt"):
+        with open("cookie.txt", 'r') as cookie_file:
+            cookie = requests.utils.cookiejar_from_dict(eval(cookie_file.read()))
+    else:
+        return None
+    user = requests.session()
+    user.cookies = cookie
+    user.headers.update({'User-Agent': userAgent})
+    res = user.get("https://jwxt.nwpu.edu.cn/student/sso-login")
+    if '<title>登入页面</title>' in res.text:
+        return None
+    else:
+        return user
+
+
+session_login = get_with_cookie()
+if session_login is None:
+    log('cookie 已过期')
+    session_login = login(config_account, config_password)
 response = session_login.get(config_url).json()
 history = []
 for item in response['semesterId2studentGrades']['178']:
@@ -98,7 +119,7 @@ for item in response['semesterId2studentGrades']['178']:
     course_gp = item['gp']
     course_score = item['gaGrade']
     history.append(f'{course_name}\t{course_credits}\t{course_gp}\t{course_score}')
-    log(f'{course_name}\t{course_credits}\t{course_gp}\t{course_score}')
+    print(f'{course_name}\t{course_credits}\t{course_gp}\t{course_score}')
 
 if os.path.exists('record.txt'):
     with open('record.txt', 'r') as f:
@@ -108,6 +129,8 @@ if os.path.exists('record.txt'):
         send_mail('出新成绩了', str(set(history) - set(eval(old_history))))
         with open('record.txt', 'w') as f:
             f.write(str(history))
+    else:
+        log('无变化')
 else:
     log('初始化')
     with open('record.txt', 'w') as f:
